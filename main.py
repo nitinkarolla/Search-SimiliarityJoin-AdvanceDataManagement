@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
+import time
 """
     Main file
 """
@@ -31,8 +31,12 @@ if __name__ == "__main__":
     edtau = 2		## Threshold:tau (Can be modified while you are testing code)
 
     dat = ReadDataFromFile(filename)
+
+    start_time = time.time()
+    
     output = SimilarityJoinED(dat,edtau)
     #WriteResults(output)
+    print("--- %s seconds ---" % (time.time() - start_time))
        
     ## Test Case1: Check number of matched pairs (In bash)
     ## Manually run `wc -l answer.csv` & `wc -l out.csv` to check if number matches.

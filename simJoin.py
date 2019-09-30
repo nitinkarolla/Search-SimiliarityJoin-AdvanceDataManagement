@@ -1,42 +1,99 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import math
+
 """
     Implement SimilarityJoinED()
     You can add supplement function, but it is not allowed
     to modify the function name and parameters
 """
 
-def LenghtFilter(string1,string2, threshold):
-    if abs(len(string1) - len(string2)) > threshold:
-        return False
-    else:
-        return True
-
 def EditDistance(string1, string2):
     """
         Edit Distance for given string1 and string2
     """
-    s1 = len(string1)
-    s2 = len(string2)
-    if s1 == 0 and s2 == 0:
-        return 0
-    elif s1 == 0:
-        return s2
-    elif s2 == 0:
-        return s1
+    m = len(string1)
+    n = len(string2)
+    table = [[0] * (n + 1) for _ in range(m + 1)]
 
-    if string1[s1-1]==string2[s2-1]: 
-        return editDistance(str1,str2,m-1,n-1) 
+    for i in range(m + 1):
+        table[i][0] = i
+    for j in range(n + 1):
+        table[0][j] = j
 
-    return 99999
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            if string1[i - 1] == string2[j - 1]:
+                table[i][j] = table[i - 1][j - 1]
+            else:
+                table[i][j] = 1 + min(table[i - 1][j], table[i][j - 1], table[i - 1][j - 1])
+    return table[-1][-1]
 
+# print(EditDistance('hello', 'hally'))
 
-def sort_lenght_alphabetical(S):
-    return
+def sortLengthAlphabetical(S):
+    S.sort(key=lambda item: (len(item), item))
+    return S
+
+def buildInvertedIndex(inverted_index, s, threshold, s_index):
+    k = len(s) - math.floor(len(s)/ (threshold + 1)) * (threshold + 1)
+    start = 0
+    end = 0
+    initial_length = math.floor(len(s)/ (threshold + 1))
+    later_length = math.ceil(len(s)/ (threshold + 1))
+    for segment in range(threshold + 1):
+        if segment < threshold + 1 - k:
+            start = end
+            end = end + initial_length
+            if (len(s), segment, s[start:end]) not in inverted_index:
+                inverted_index[(len(s), segment, s[start:end])] = [s_index]
+            else:
+                inverted_index[(len(s), segment, s[start:end])].append(s_index)
+        else:
+            start = end
+            end = end + later_length
+            if (len(s), segment, s[start:end]) not in inverted_index:
+                inverted_index[(len(s), segment, s[start:end])] = [s_index]
+            else:
+                inverted_index[(len(s), segment, s[start:end])].append(s_index)
+    return inverted_index
+
+#buildInvertedIndex({}, "vankatesh",3,0)
+
+def subStringSelection(s,inverted_index,l,i):
+    W_s_Lli = []
+    for k in list(inverted_index.keys()):
+        if k[0] == l and k[1] == i:
+            if k[2] in s:
+                W_s_Lli.append(k[2])
+    return W_s_Lli
+
+def Verification(S,s,R,threshold):
+    out = []
+    for r in R:
+        distance = EditDistance(S[s],S[r])
+        if distance <= threshold:
+            out.append((s,r, distance))
+    return out
 
 def PassJoin(dat, threshold):
-    return
+    output = []
+    S = sortLengthAlphabetical(dat)
+    inverted_index = {}
+    for s in range(len(S)):
+        if s == 0:
+            inverted_index = buildInvertedIndex(inverted_index, S[s], threshold, s)
+        else:
+            for l in range(len(s)- threshold, len(s)):
+                for i in range(0,threshold):
+                    W_s_Lli = subStringSelection(S[s], inverted_index, l, i)
+                    for w in W_s_Lli:
+                        if (l,i,w) in inverted_index:
+                            out = Verification(S, s, inverted_index[(l,i,w)], threshold)
+                            output = output + out
+            inverted_index = buildInvertedIndex(inverted_index, S[s], threshold, s)
+    return output
 
 
 
@@ -58,20 +115,65 @@ def SimilarityJoinED(dat, threshold):
     # ...Code here...
     output = []
 
-    for i in range(len(dat)):
-        for j in range(len(dat)):
-            if i == j :
-                pass
-            else:
-                if LenghtFilter(dat[i], dat[j], threshold):
-                    distance = EditDistance(dat[i],dat[j])
-                    output.append((i,j, distance))
-                
 
-    
-    
+    ## Normal Edit Distance
+
+    # for i in range(len(dat)):
+    #     for j in range(i+1,len(dat)):
+    #         if i == j :
+    #             pass
+    #         else:
+    #             distance = EditDistance(dat[i],dat[j])
+    #             if distance <= threshold:
+    #                 output.append((i,j, distance))
+
+
+    ## Inverted Index based Edit Distance
+
+    # S = sortLengthAlphabetical(dat)
+    # inverted_index = {}
+    # for s in range(len(S)):
+    #     if s == 0:
+    #         inverted_index = buildInvertedIndex(inverted_index, S[s], threshold, s)
+    #     else:
+    #         possible_index = []
+    #         for i in list(inverted_index.keys()):
+    #             if i[2] in S[s]:
+    #                 possible_index = possible_index + inverted_index[i]
+    #         for r in set(possible_index):
+    #             distance = EditDistance(S[s],S[r])
+    #             if distance <= threshold:
+    #                  output.append((s,r, distance))
+
+    #         inverted_index = buildInvertedIndex(inverted_index, S[s], threshold, s)
+
+
+    ### Pass Join 
+
+    S = sortLengthAlphabetical(dat)
+    inverted_index = {}
+    for s in range(len(S)):
+        if s == 0:
+            inverted_index = buildInvertedIndex(inverted_index, S[s], threshold, s)
+        else:
+            R = []
+            for l in range(len(S[s])- threshold, len(S[s])):
+                for i in range(0,threshold):
+                    W_s_Lli = subStringSelection(S[s], inverted_index, l, i)
+                    for w in W_s_Lli:
+                        if (l,i,w) in inverted_index:
+                            R = R + inverted_index[(l,i,w)]
+                out = Verification(S, s, set(R), threshold)
+                output = output + out
+            inverted_index = buildInvertedIndex(inverted_index, S[s], threshold, s)
+
+    print(len(output))
+            
+            
     ## Don't forget to apply threshold to omit unneeded string pairs!!
     ## Note that only string pairs with edit distance no larger than the threshold will be added to results. 
     ## If the edit distance between a pair of strings is larger than the threshold, it should not be added to the result set. 
     
     return output
+
+
