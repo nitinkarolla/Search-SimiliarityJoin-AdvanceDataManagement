@@ -30,13 +30,17 @@ def EditDistance(string1, string2):
                 table[i][j] = 1 + min(table[i - 1][j], table[i][j - 1], table[i - 1][j - 1])
     return table[-1][-1]
 
-# print(EditDistance('hello', 'hally'))
-
 def sortLengthAlphabetical(S):
+    """
+    Sorting the data first by Length and then alphabatically
+    """
     S.sort(key=lambda item: (len(item), item))
     return S
 
 def buildInvertedIndex(inverted_index, s, threshold, s_index):
+    """
+    Building an inverted index for given string s and threshold by spliting it into segments.
+    """
     k = len(s) - math.floor(len(s)/ (threshold + 1)) * (threshold + 1)
     start = 0
     end = 0
@@ -46,27 +50,23 @@ def buildInvertedIndex(inverted_index, s, threshold, s_index):
         if segment < threshold + 1 - k:
             start = end
             end = end + initial_length
-            if (len(s), segment, s[start:end]) not in inverted_index:
-                inverted_index[(len(s), segment, s[start:end])] = [s_index]
-            else:
-                inverted_index[(len(s), segment, s[start:end])].append(s_index)
         else:
             start = end
             end = end + later_length
-            if (len(s), segment, s[start:end]) not in inverted_index:
-                inverted_index[(len(s), segment, s[start:end])] = [s_index]
+        if (len(s), segment) not in inverted_index:
+            inverted_index[(len(s), segment)] = {s[start:end] : [s_index]}
+        else:
+            if s[start:end] not in inverted_index[(len(s), segment)]:
+                inverted_index[(len(s), segment)] [s[start:end]]= [s_index]
             else:
-                inverted_index[(len(s), segment, s[start:end])].append(s_index)
+                inverted_index[(len(s), segment)] [s[start:end]].append(s_index)
     return inverted_index
 
-#buildInvertedIndex({}, "vankatesh",3,0)
-
-def subStringSelection(s,inverted_index,l,i):
+def subStringSelection(s,inverted_index):
     W_s_Lli = []
-    for k in list(inverted_index.keys()):
-        if k[0] == l and k[1] == i:
-            if k[2] in s:
-                W_s_Lli.append(k[2])
+    for k in inverted_index.keys():
+        if k in s:
+            W_s_Lli.append(k)
     return W_s_Lli
 
 def Verification(S,s,R,threshold):
@@ -76,26 +76,6 @@ def Verification(S,s,R,threshold):
         if distance <= threshold:
             out.append((s,r, distance))
     return out
-
-def PassJoin(dat, threshold):
-    output = []
-    S = sortLengthAlphabetical(dat)
-    inverted_index = {}
-    for s in range(len(S)):
-        if s == 0:
-            inverted_index = buildInvertedIndex(inverted_index, S[s], threshold, s)
-        else:
-            for l in range(len(s)- threshold, len(s)):
-                for i in range(0,threshold):
-                    W_s_Lli = subStringSelection(S[s], inverted_index, l, i)
-                    for w in W_s_Lli:
-                        if (l,i,w) in inverted_index:
-                            out = Verification(S, s, inverted_index[(l,i,w)], threshold)
-                            output = output + out
-            inverted_index = buildInvertedIndex(inverted_index, S[s], threshold, s)
-    return output
-
-
 
 def SimilarityJoinED(dat, threshold):
     """
@@ -114,58 +94,59 @@ def SimilarityJoinED(dat, threshold):
     
     # ...Code here...
     output = []
-
+    method = "" # Other options available are "Normal", "Index"
 
     ## Normal Edit Distance
-
-    # for i in range(len(dat)):
-    #     for j in range(i+1,len(dat)):
-    #         if i == j :
-    #             pass
-    #         else:
-    #             distance = EditDistance(dat[i],dat[j])
-    #             if distance <= threshold:
-    #                 output.append((i,j, distance))
+    if method == 'Normal':
+        for i in range(len(dat)):
+            for j in range(i+1,len(dat)):
+                if i == j :
+                    pass
+                else:
+                    distance = EditDistance(dat[i],dat[j])
+                    if distance <= threshold:
+                        output.append((i,j, distance))
 
 
     ## Inverted Index based Edit Distance
+    elif method == 'Index':
+        S = sortLengthAlphabetical(dat)
+        inverted_index = {}
+        for s in range(len(S)):
+            if s == 0:
+                inverted_index = buildInvertedIndex(inverted_index, S[s], threshold, s)
+            else:
+                possible_index = []
+                for i in list(inverted_index.keys()):
+                    if i[2] in S[s]:
+                        possible_index = possible_index + inverted_index[i]
+                for r in set(possible_index):
+                    distance = EditDistance(S[s],S[r])
+                    if distance <= threshold:
+                        output.append((s,r, distance))
 
-    # S = sortLengthAlphabetical(dat)
-    # inverted_index = {}
-    # for s in range(len(S)):
-    #     if s == 0:
-    #         inverted_index = buildInvertedIndex(inverted_index, S[s], threshold, s)
-    #     else:
-    #         possible_index = []
-    #         for i in list(inverted_index.keys()):
-    #             if i[2] in S[s]:
-    #                 possible_index = possible_index + inverted_index[i]
-    #         for r in set(possible_index):
-    #             distance = EditDistance(S[s],S[r])
-    #             if distance <= threshold:
-    #                  output.append((s,r, distance))
-
-    #         inverted_index = buildInvertedIndex(inverted_index, S[s], threshold, s)
+                inverted_index = buildInvertedIndex(inverted_index, S[s], threshold, s)
 
 
     ### Pass Join 
-
-    S = sortLengthAlphabetical(dat)
-    inverted_index = {}
-    for s in range(len(S)):
-        if s == 0:
-            inverted_index = buildInvertedIndex(inverted_index, S[s], threshold, s)
-        else:
-            R = []
-            for l in range(len(S[s])- threshold, len(S[s])):
-                for i in range(0,threshold):
-                    W_s_Lli = subStringSelection(S[s], inverted_index, l, i)
-                    for w in W_s_Lli:
-                        if (l,i,w) in inverted_index:
-                            R = R + inverted_index[(l,i,w)]
+    else:
+        S = sortLengthAlphabetical(dat)
+        inverted_index = {}
+        for s in range(len(S)):
+            if s == 0:
+                inverted_index = buildInvertedIndex(inverted_index, S[s], threshold, s)
+            else:
+                R = []
+                for l in range(len(S[s])- threshold, len(S[s])+1 ):
+                    for i in range(0,threshold+1):
+                        if (l,i) in inverted_index:
+                            W_s_Lli = subStringSelection(S[s], inverted_index[(l, i)])
+                            for w in W_s_Lli:
+                                if w in inverted_index[(l,i)]:
+                                    R = R + inverted_index[(l,i)][w]
                 out = Verification(S, s, set(R), threshold)
                 output = output + out
-            inverted_index = buildInvertedIndex(inverted_index, S[s], threshold, s)
+                inverted_index = buildInvertedIndex(inverted_index, S[s], threshold, s)
 
     print(len(output))
             
