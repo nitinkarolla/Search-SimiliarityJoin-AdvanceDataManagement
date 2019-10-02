@@ -53,19 +53,20 @@ def buildInvertedIndex(inverted_index, s, threshold, s_index, w_position):
             end = end + later_length
         if (len(s), segment) not in inverted_index:
             inverted_index[(len(s), segment)] = {s[start:end] : [s_index]}
-            w_position[(len(s), segment, s_index)] = start
+            w_position[(len(s), segment)] = start
         else:
             if s[start:end] not in inverted_index[(len(s), segment)]:
                 inverted_index[(len(s), segment)] [s[start:end]]= [s_index]
-                w_position[(len(s), segment, s_index)] = start
             else:
                 inverted_index[(len(s), segment)] [s[start:end]].append(s_index)
-                w_position[(len(s), segment, s_index)] = start
     return inverted_index, w_position
 
 #l1, l2 =  buildInvertedIndex({}, 'hellasdefgweas', 2, 1, {})
 
 def subStringSelection(s,index):
+    """
+    Simple Substring Selection
+    """
     W_s_Lli = []
     #if 
     for k in index.keys():
@@ -73,22 +74,18 @@ def subStringSelection(s,index):
             W_s_Lli.append(k)
     return W_s_Lli
 
-def subStringSelection2(S, s ,inverted_index, threshold, w_position):
+def subStringSelection2(S, s ,inverted_index, threshold, w_position,l,i):
+    """
+    Substring Selection - Multi-match-aware
+    """
     W_s_Lli = []
-    set_of_R = []
-    for l in range(len(S[s])- threshold, len(S[s])+1 ):
-        for i in range(0,threshold+1):
-            if (l,i) in inverted_index:
-                for w in inverted_index[(l,i)]:
-                    for index in inverted_index[(l,i)][w]:
-                        if index not in set_of_R:
-                            delta = abs(len(S[s])- len(S[index]))
-                            p_i = w_position[(l,i,index)]
-                            start = max([p_i - i , p_i + delta - (threshold - i)])
-                            end = min ([p_i + i, p_i + delta + (threshold - i)]) + 1 + len(w)
-                            if w in S[s][start:end]:
-                                set_of_R.append(index)
-                                W_s_Lli.append((w, index, i))
+    for w in inverted_index[(l,i)]:
+        delta = abs(len(S[s])- l)
+        p_i = w_position[(l,i)]
+        start = max([p_i - i , p_i + delta - (threshold - i)])
+        end = min ([p_i + i, p_i + delta + (threshold - i)]) + 1 + len(w)
+        if w in S[s][start:end]:
+            W_s_Lli.append(w)
     return W_s_Lli
 
 def Verification(S,s,R,threshold):
@@ -99,16 +96,25 @@ def Verification(S,s,R,threshold):
             out.append((s,r, distance))
     return out
 
-def Verification2(S, s, w, R, threshold,i):
-    s = S[s].split(w, 1)
-    r = S[R].split(w, 1) 
-    d1 = EditDistance(s[0], r[0])
-    if d1 > i+1:
-        return "Reject"
-    d2 = EditDistance(s[1],r[1])
-    if d1 + d2 > threshold:
-        return "Reject"
-    return (s,R,d1 + d2)
+def Verification2(S, s_index, w, R, threshold,i, ed_dict):
+    out = []
+    for r_1 in R:
+        if (s_index,r_1) in ed_dict:
+            continue
+        else:
+            ed_dict[(s_index,r_1)] = 1
+        s = S[s_index].split(w, 1)
+        r = S[r_1].split(w, 1) 
+        d1 = EditDistance(s[0], r[0])
+        if d1 > i+1:
+            continue
+        d2 = EditDistance(s[1],r[1])
+        if d1 + d2 > threshold:
+            continue
+        out.append((s_index,r_1, d1+d2))
+    return out
+            
+        
 
 #print(Verification2(S= ["tommydickharry","tomnidlckhairy"] ,s=0,w='ck',R= 1, threshold = 4))
 
@@ -171,7 +177,7 @@ def SimilarityJoinED(dat, threshold):
         inverted_index = {}
         for s in range(len(S)):
             if s == 0:
-                inverted_index = buildInvertedIndex(inverted_index, S[s], threshold, s)
+                inverted_index = buildInvertedIndex(inverted_index, S[s], threshold, s, w_position)
             else:
                 R = []
                 for l in range(len(S[s])- threshold, len(S[s])+1 ):
@@ -183,22 +189,27 @@ def SimilarityJoinED(dat, threshold):
                                     R = R + inverted_index[(l,i)][w]
                 out = Verification(S, s, set(R), threshold)
                 output = output + out
-                inverted_index = buildInvertedIndex(inverted_index, S[s], threshold, s)
+                inverted_index = buildInvertedIndex(inverted_index, S[s], threshold, s, w_position)
     
     ## Pass Join with Multi aware position subselction and Extended Verification
     else:
         S = sortLengthAlphabetical(dat)
         inverted_index = {}
         w_position = {}
+        ed_dict = {}
         for s in range(len(S)):
             if s == 0:
                 inverted_index , w_position = buildInvertedIndex(inverted_index, S[s], threshold, s, w_position)
             else:
-                W_s_Lli = subStringSelection2(S, s, inverted_index, threshold, w_position)
-                for (w,R,i) in W_s_Lli:
-                    out = Verification2(S, s, w, R, threshold,i)
-                    if out != "Reject":
-                        output.append(out)
+                for l in range(len(S[s])- threshold, len(S[s])+1 ):
+                    for i in range(0,threshold+1):
+                        if (l,i) in inverted_index:
+                            W_s_Lli = subStringSelection2(S, s, inverted_index, threshold, w_position,l,i)
+                            for w in W_s_Lli:
+                                if w in inverted_index[(l,i)]:
+                                    out = Verification2(S, s, w, inverted_index[(l,i)][w], threshold,i, ed_dict)
+                                    if out != "Reject":
+                                        output = output + out
                 inverted_index , w_position = buildInvertedIndex(inverted_index, S[s], threshold, s, w_position)
 
     print(len(output))
