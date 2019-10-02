@@ -5,7 +5,7 @@ import time
     Main file
 """
 import csv
-from simJoin import SimilarityJoinED
+from simJoin2 import SimilarityJoinED
 
 """
     Supplement function ReadDataFromFile()
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     
     output = SimilarityJoinED(dat,edtau)
     #print(output)
-    WriteResults(output)
+    #WriteResults(output)
     print("--- %s seconds ---" % (time.time() - start_time))
        
     ## Test Case1: Check number of matched pairs (In bash)
