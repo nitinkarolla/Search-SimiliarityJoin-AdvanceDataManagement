@@ -13,22 +13,20 @@ def EditDistance(string1, string2):
     """
         Edit Distance for given string1 and string2
     """
-    m = len(string1)
-    n = len(string2)
-    table = [[0] * (n + 1) for _ in range(m + 1)]
-
-    for i in range(m + 1):
-        table[i][0] = i
-    for j in range(n + 1):
-        table[0][j] = j
-
-    for i in range(1, m + 1):
-        for j in range(1, n + 1):
-            if string1[i - 1] == string2[j - 1]:
-                table[i][j] = table[i - 1][j - 1]
+    if len(string1) > len(string2):
+        string1, string2 = string2, string1
+    distances = range(len(string1) + 1)
+    for index2, char2 in enumerate(string2):
+        newDistances = [index2 + 1]
+        for index1, char1 in enumerate(string1):
+            if char1 == char2:
+                newDistances.append(distances[index1])
             else:
-                table[i][j] = 1 + min(table[i - 1][j], table[i][j - 1], table[i - 1][j - 1])
-    return table[-1][-1]
+                newDistances.append(1 + min((distances[index1],
+                                             distances[index1 + 1],
+                                             newDistances[-1])))
+        distances = newDistances
+    return distances[-1]
 
 def sortLengthAlphabetical(S):
     """
@@ -62,9 +60,11 @@ def buildInvertedIndex(inverted_index, s, threshold, s_index):
                 inverted_index[(len(s), segment)] [s[start:end]].append(s_index)
     return inverted_index
 
-def subStringSelection(s,inverted_index):
+#buildInvertedIndex({}, 'hell', 2, 1)
+
+def subStringSelection(s,index):
     W_s_Lli = []
-    for k in inverted_index.keys():
+    for k in index.keys():
         if k in s:
             W_s_Lli.append(k)
     return W_s_Lli

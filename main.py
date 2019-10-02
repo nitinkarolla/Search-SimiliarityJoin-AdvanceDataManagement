@@ -28,7 +28,7 @@ def WriteResults(dat):
 
 if __name__ == "__main__":
     filename = "E:/Semester-3/Advance Data Management/Search-SimiliarityJoin-AdvanceDataManagement/testset/sample_test3.txt"		## Input file path (Can be modified while you are testing code)
-    edtau = 1		## Threshold:tau (Can be modified while you are testing code)
+    edtau = 2		## Threshold:tau (Can be modified while you are testing code)
 
     dat = ReadDataFromFile(filename)
 
