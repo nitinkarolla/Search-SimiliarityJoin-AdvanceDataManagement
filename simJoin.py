@@ -175,6 +175,7 @@ def SimilarityJoinED(dat, threshold):
     elif method == "SimplePass":
         S = sortLengthAlphabetical(dat)
         inverted_index = {}
+        w_position={}
         for s in range(len(S)):
             if s == 0:
                 inverted_index = buildInvertedIndex(inverted_index, S[s], threshold, s, w_position)
