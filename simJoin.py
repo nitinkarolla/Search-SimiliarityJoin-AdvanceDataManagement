@@ -85,7 +85,7 @@ def subStringSelection2(S, s ,inverted_index, threshold, w_position,l,i):
         start = max([p_i - i , p_i + delta - (threshold - i)])
         end = min ([p_i + i, p_i + delta + (threshold - i)]) + 1 + len(w)
         if w in S[s][start:end]:
-            W_s_Lli.append(w)
+            W_s_Lli.append((w,p_i))
     return W_s_Lli
 
 def Verification(S,s,R,threshold):
@@ -96,27 +96,40 @@ def Verification(S,s,R,threshold):
             out.append((s,r, distance))
     return out
 
-def Verification2(S, s_index, w, R, threshold,i, ed_dict):
+def split(s, start, end, w):
+    w_start = start + s[start:end+1].find(w)
+    end = w_start + len(w)
+    s = [s[:w_start], s[w_start + len(w) :]] 
+    return s
+
+def Verification2(S, s_index, w, R, threshold,i, ed_dict, dat_org):
     out = []
     for r_1 in R:
         if (s_index,r_1) in ed_dict:
             continue
         else:
             ed_dict[(s_index,r_1)] = 1
-        s = S[s_index].split(w, 1)
-        r = S[r_1].split(w, 1) 
-        d1 = EditDistance(s[0], r[0])
+        if len(S[s_index].split(w[0])) > 2:
+            delta = abs(len(S[s_index])- len(S[r_1]))
+            start = max([w[1] - i , w[1] + delta - (threshold - i)])
+            end = min ([w[1] + i, w[1] + delta + (threshold - i)]) + 1 + len(w)
+            s = split(S[s_index],start,end,w[0])
+        else:
+            s = S[s_index].split(w[0],1)
+        r_l = S[r_1][0 : w[1]] 
+        r_r = S[r_1][w[1]+ len(w[0]):]
+        d1 = EditDistance(s[0], r_l)
         if d1 > i+1:
             continue
-        d2 = EditDistance(s[1],r[1])
+        d2 = EditDistance(s[1],r_r)
         if d1 + d2 > threshold:
             continue
-        out.append((s_index,r_1, d1+d2))
+        if dat_org.index(S[r_1]) < dat_org.index(S[s_index]):
+            out.append((dat_org.index(S[r_1]),dat_org.index(S[s_index]), d1+d2))
+        else:
+            out.append((dat_org.index(S[s_index]),dat_org.index(S[r_1]), d1+d2))
+        #out.append((r_1,s_index, d1+d2))
     return out
-            
-        
-
-#print(Verification2(S= ["tommydickharry","tomnidlckhairy"] ,s=0,w='ck',R= 1, threshold = 4))
 
 
 def SimilarityJoinED(dat, threshold):
@@ -136,7 +149,9 @@ def SimilarityJoinED(dat, threshold):
     
     # ...Code here...
     output = []
+    dat_org = dat.copy()
     method = "" # Other options available are "Normal", "Index", "SimplePass"
+
 
     ## Normal Edit Distance
     if method == 'Normal':
@@ -207,14 +222,14 @@ def SimilarityJoinED(dat, threshold):
                         if (l,i) in inverted_index:
                             W_s_Lli = subStringSelection2(S, s, inverted_index, threshold, w_position,l,i)
                             for w in W_s_Lli:
-                                if w in inverted_index[(l,i)]:
-                                    out = Verification2(S, s, w, inverted_index[(l,i)][w], threshold,i, ed_dict)
+                                if w[0] in inverted_index[(l,i)]:
+                                    out = Verification2(S, s, w, inverted_index[(l,i)][w[0]], threshold,i, ed_dict, dat_org)
                                     if out != "Reject":
                                         output = output + out
                 inverted_index , w_position = buildInvertedIndex(inverted_index, S[s], threshold, s, w_position)
 
     print(len(output))
-            
+    output = sorted(output, key=lambda element: (element[0], element[1]))
             
     ## Don't forget to apply threshold to omit unneeded string pairs!!
     ## Note that only string pairs with edit distance no larger than the threshold will be added to results. 

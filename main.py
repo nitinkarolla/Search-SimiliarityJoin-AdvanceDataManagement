@@ -21,13 +21,13 @@ def ReadDataFromFile(filepath):
     Write list of list into disk as a csv file
 """
 def WriteResults(dat):
-    with open("out.csv", "w", newline="") as f:
+    with open("out_4_pass.csv", "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerows(dat)
 
 
 if __name__ == "__main__":
-    filename = "E:/Semester-3/Advance Data Management/Search-SimiliarityJoin-AdvanceDataManagement/testset/sample_test3.txt"		## Input file path (Can be modified while you are testing code)
+    filename = "E:/Semester-3/Advance Data Management/Search-SimiliarityJoin-AdvanceDataManagement/testset/sample_test4.txt"		## Input file path (Can be modified while you are testing code)
     edtau = 4		## Threshold:tau (Can be modified while you are testing code)
 
     dat = ReadDataFromFile(filename)
@@ -35,7 +35,8 @@ if __name__ == "__main__":
     start_time = time.time()
     
     output = SimilarityJoinED(dat,edtau)
-    #WriteResults(output)
+    #print(output)
+    WriteResults(output)
     print("--- %s seconds ---" % (time.time() - start_time))
        
     ## Test Case1: Check number of matched pairs (In bash)
