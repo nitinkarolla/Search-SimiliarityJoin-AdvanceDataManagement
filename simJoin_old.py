@@ -113,19 +113,7 @@ def Verification2(S, s_index, w, R, threshold,i, ed_dict, dat_org):
             delta = abs(len(S[s_index])- len(S[r_1]))
             start = max([w[1] - i , w[1] + delta - (threshold - i)])
             end = min ([w[1] + i, w[1] + delta + (threshold - i)]) + 1 + len(w)
-            if len(S[s_index][start:end+1].split(w[0])) > 2:
-                d = EditDistance(S[s_index],S[r_1])
-                if d <= threshold:
-                    if dat_org.index(S[r_1]) < dat_org.index(S[s_index]):
-                        out.append((dat_org.index(S[r_1]),dat_org.index(S[s_index]), d))
-                        continue
-                    else:
-                        out.append((dat_org.index(S[s_index]),dat_org.index(S[r_1]), d))
-                        continue
-                else:
-                    continue
-            else:
-                s = split(S[s_index],start,end,w[0])
+            s = split(S[s_index],start,end,w[0])
         else:
             s = S[s_index].split(w[0],1)
         r_l = S[r_1][0 : w[1]] 
@@ -248,5 +236,4 @@ def SimilarityJoinED(dat, threshold):
     ## If the edit distance between a pair of strings is larger than the threshold, it should not be added to the result set. 
     
     return output
-
 

@@ -5,7 +5,7 @@ import time
     Main file
 """
 import csv
-from simJoin2 import SimilarityJoinED
+from simJoin import SimilarityJoinED
 
 """
     Supplement function ReadDataFromFile()
@@ -27,8 +27,8 @@ def WriteResults(dat):
 
 
 if __name__ == "__main__":
-    filename = "E:/Semester-3/Advance Data Management/Search-SimiliarityJoin-AdvanceDataManagement/testset/sample_test3.txt"		## Input file path (Can be modified while you are testing code)
-    edtau = 2		## Threshold:tau (Can be modified while you are testing code)
+    filename = "E:/Semester-3/Advance Data Management/Search-SimiliarityJoin-AdvanceDataManagement/testset/sample_test2.txt"		## Input file path (Can be modified while you are testing code)
+    edtau = 3		## Threshold:tau (Can be modified while you are testing code)
 
     dat = ReadDataFromFile(filename)
 
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     
     output = SimilarityJoinED(dat,edtau)
     #print(output)
-    #WriteResults(output)
+    WriteResults(output)
     print("--- %s seconds ---" % (time.time() - start_time))
        
     ## Test Case1: Check number of matched pairs (In bash)
